@@ -123,12 +123,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Chip-8_Emu.cpp" />
-    <ClCompile Include="CPU.cpp" />
+    <ClCompile Include="Chip_8.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Memory.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CPU.h" />
+    <ClInclude Include="Chip_8.h" />
     <ClInclude Include="Memory.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
