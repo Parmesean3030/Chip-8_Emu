@@ -2,14 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <print>
 
 class Chip_8
 {
 public:
+	unsigned char gfx[64 * 32]; // gfx buffer
+	unsigned char key[16]; // Keypad
+	
 	void initialize();
-	void loadRom();
+	void loadRom(const char*);
+	void emulationCycle(); // Emulate one cycle
+
+	Chip_8();
+	~Chip_8();
 
 private:
 	// memory is 4kb
