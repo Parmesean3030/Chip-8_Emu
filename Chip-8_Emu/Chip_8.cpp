@@ -40,8 +40,8 @@ void Chip_8::initialize() {
 				0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
 
-	// Load fontSet into memory
-	for (unsigned short i = 0; i < sizeof(fontSet); ++i) memory[i] = fontSet[i];
+	// Load fontSet into memory starting at location 0x50
+	for (unsigned short i = 0; i < sizeof(fontSet); ++i) memory[0x50 + i] = fontSet[i];
 
 }
 
@@ -75,47 +75,111 @@ void Chip_8::loadRom(const char* filename) {
 
 void Chip_8::emulationCycle() {
 
-	// Fetch
-	// Op code is 16-bit, memory is 8-bit, combine 2 8-bit opcodes to make 1 instruction
+	// Fetch: Opcode is 16-bit, memory is 8-bit, combine 2 8-bit memory instructions to make 1 Opcode
 	opcode = memory[PC] << 8 | memory[PC + 1];
 
-	// Decode
-	switch(opcode & 0xF000) {
+	// Decode & execute
+	switch (opcode & 0xF000) {
 
-		// 0x00E0 opcode
-		// FIX ME: Add nested switch to factor in 0x00EE op code
 		case 0x0000:
-			// clear screen
-			std::cout << "0x00E0 working! \n";
-			PC += 2;
+
+			switch (opcode & 0x000F) {
+
+			// 0x00E0 opcode
+			// Clear gfx[]/screen
+			case 0x0000:
+				for (unsigned short i = 0; i < (64 * 32); ++i) gfx[i] = 0;
+				PC += 2;
+				break;
+
+			// 0x00EE: Return from subroutine
+			case 0x000E:
+				// FIX ME
+				break;
+
+			default:
+				std::cout << "Opcode: " << std::hex << opcode << std::dec << " not found!\n\n";
+				break;
+			}
+
 			break;
-		
-		// load normal register with immediate value
-		// 3rd hex value determines the V register
-		// 1st & 2nd hex values are what to add to said V register
+
+		// 0x1nnn: Jump to address
+		// n, n and n added to program counter
+		case 0x1000:
+			PC = opcode & 0x0FFF;
+			break;
+
+		// 0x6xnn: load normal register with immediate value
+		// x is the V register
+		// n and n are placed into V[x] register
 		case 0x6000:
 			V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
-			// DELETE ME - This is for testing purposes
-			std::cout << "Register V[" << (opcode & 0x0F00 >> 8) << "] has had the value " << (opcode & 0x00FF) << " added to it\n";
 			PC += 2;
 			break;
 
-		// load index register with immediate value
+		// 0xAnnn: load index register with immediate value
+		// n, n and n added to I
 		case 0xA000:
 			I = opcode & 0x0FFF;
-			std::cout << "Register I has been set to " << (opcode & 0x0FFF) << "\n";
 			PC += 2;
 			break;
 
-		case 0xD000:
-			// Draw sprite to screen (only aligned)
-			std::cout << "0xD000 working! \n";
+		// 0xDxyn: Draw sprites to screen
+		// 0xDxyn - x is V[x], y is V[y], n is the height of sprite
+		// Modulo to wrap coordinates
+		case 0xD000: {
+
+			unsigned short xCoord = V[(opcode & 0x0F00) >> 8] % 64;
+			unsigned short yCoord = V[(opcode & 0x00F0) >> 4] % 32;
+			unsigned short height = opcode & 0x000F;
+			unsigned short sprite;
+
+			// Set collision register V[15]
+			V[0xF] = 0;
+
+			// Each sprite has a height of n pixels (row) and a width (col) of 8 pixels
+			for (unsigned short row = 0; row < height; ++row) {
+
+				sprite = memory[I + row];
+
+				// Clip sprite and protect against gfx[] overflow
+				if (yCoord + row >= 32) break;
+
+				for (unsigned short col = 0; col < 8; ++col) {
+
+					//  Clip sprite and protect against gfx[] overflow
+					if (xCoord + col >= 64) break;
+
+					// 0x80 = 10000000
+					// Check each bit of the 8-bit sprite pulled from memory
+					// If bit is 1, proceed, otherwise iterate to next bit
+					if ((sprite & (0x80 >> col)) != 0) {
+
+						// Since graphics buffer is a 1D array but has 2 coordinates (x, y)
+						// we must "flatten" the array by using (x+(y*width) formula
+						unsigned short location = xCoord + col + ((yCoord + row) * 64);
+
+						// Check graphic buffer, if location already set to 1 set V[0xF] to 1
+						if (gfx[location] == 1) {
+
+							V[0xF] = 1;
+
+						}
+
+						// XOR location in flattened graphics buffer
+						gfx[location] ^= 1;
+
+					}
+				}
+			}
+
 			PC += 2;
 			break;
+		}
 
 		default: 
 			std::cout << "Opcode not recognized! \n";
-
 	}
 
 	// Execute

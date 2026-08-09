@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm>
 #include <print>
+#include "SDL.h"
 
 class Chip_8
 {
@@ -14,6 +15,7 @@ public:
 	
 	void initialize();
 	void loadRom(const char*);
+	void draw();
 	void emulationCycle(); // Emulate one cycle
 
 	Chip_8();
