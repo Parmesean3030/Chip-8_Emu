@@ -52,7 +52,7 @@ void Chip_8::loadRom(const char* filename) {
 	std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
 	if (!file.is_open()) {
-		std::cout << "Rom failed to load: " << filename << "\n";
+		std::cout << "Rom failed to load: " << filename << "\n\nClosing Chip-8 Emulator...";
 		exit(1);
 	}
 
@@ -62,20 +62,22 @@ void Chip_8::loadRom(const char* filename) {
 
 	// Check if the ROM fits in memory
 	if (size > (4096 - 512)) {
-		std::cout << "Error: ROM file is too large to fit in memory.\n";
+		std::cout << "Error: ROM file is too large to fit in memory.\n\nClosing Chip-8 Emulator...";
 		exit(1);
 	}
 
-	// Read into memory array starting at 0x200
+	std::cout << "Loading ROM into memory...\n\n";
+
+	// Read into memory array starting at memory location 0x200
 	// reinterpret_cast to read unsigned char*
-	file.read(reinterpret_cast<char*>(&memory[0x200]), size);
+	file.read(reinterpret_cast<char*>(&memory[PC]), size);
 
 	std::cout << "Loading complete!\n\n";
 }
 
 void Chip_8::emulationCycle() {
 
-	// Fetch: Opcode is 16-bit, memory is 8-bit, combine 2 8-bit memory instructions to make 1 Opcode
+	// Fetch: Opcode is 16-bit, must combine 2 instructions from memory
 	opcode = memory[PC] << 8 | memory[PC + 1];
 
 	// Decode & execute
@@ -127,7 +129,7 @@ void Chip_8::emulationCycle() {
 
 		// 0xDxyn: Draw sprites to screen
 		// 0xDxyn - x is V[x], y is V[y], n is the height of sprite
-		// Modulo to wrap coordinates
+		// Modulo to wrap coordinates initially
 		case 0xD000: {
 
 			unsigned short xCoord = V[(opcode & 0x0F00) >> 8] % 64;
@@ -135,7 +137,7 @@ void Chip_8::emulationCycle() {
 			unsigned short height = opcode & 0x000F;
 			unsigned short sprite;
 
-			// Set collision register V[15]
+			// Set collision register
 			V[0xF] = 0;
 
 			// Each sprite has a height of n pixels (row) and a width (col) of 8 pixels
@@ -148,7 +150,7 @@ void Chip_8::emulationCycle() {
 
 				for (unsigned short col = 0; col < 8; ++col) {
 
-					//  Clip sprite and protect against gfx[] overflow
+					//  Clip sprite
 					if (xCoord + col >= 64) break;
 
 					// 0x80 = 10000000
@@ -158,9 +160,9 @@ void Chip_8::emulationCycle() {
 
 						// Since graphics buffer is a 1D array but has 2 coordinates (x, y)
 						// we must "flatten" the array by using (x+(y*width) formula
-						unsigned short location = xCoord + col + ((yCoord + row) * 64);
+						unsigned short location = (xCoord + col + ((yCoord + row) * 64));
 
-						// Check graphic buffer, if location already set to 1 set V[0xF] to 1
+						// Check graphic buffer, if location already set to 1 set collision register to 1
 						if (gfx[location] == 1) {
 
 							V[0xF] = 1;
@@ -169,11 +171,11 @@ void Chip_8::emulationCycle() {
 
 						// XOR location in flattened graphics buffer
 						gfx[location] ^= 1;
-
 					}
 				}
 			}
 
+			draw = true;
 			PC += 2;
 			break;
 		}
@@ -181,7 +183,4 @@ void Chip_8::emulationCycle() {
 		default: 
 			std::cout << "Opcode not recognized! \n";
 	}
-
-	// Execute
-
 }

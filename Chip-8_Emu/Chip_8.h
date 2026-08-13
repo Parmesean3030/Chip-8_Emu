@@ -11,11 +11,11 @@ class Chip_8
 {
 public:
 	unsigned char gfx[64 * 32]; // gfx buffer
+	bool draw;
 	unsigned char key[16]; // Keypad
 	
 	void initialize();
 	void loadRom(const char*);
-	void draw();
 	void emulationCycle(); // Emulate one cycle
 
 	Chip_8();
