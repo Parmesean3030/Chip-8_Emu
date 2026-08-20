@@ -6,6 +6,7 @@
 int main(int argc, char* argv[])
 {
 	bool loop = true;
+	int counter = 0;
 	unsigned int pixels[64 * 32];
 	Chip_8 chip8;
 
@@ -23,12 +24,13 @@ int main(int argc, char* argv[])
 		system("exit");
 	}
 
+
 	SDL_Event event;
 	SDL_Renderer* rend = SDL_CreateRenderer(window, -1, 0);
 	SDL_Texture* texture = SDL_CreateTexture(rend, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 64, 32);
 
 	chip8.initialize();
-	chip8.loadRom("../ROMs/Test/1-chip8-logo.ch8");
+	chip8.loadRom("../ROMs/Test/2-ibm-logo.ch8");
 
 	while (loop) {
 
@@ -50,6 +52,7 @@ int main(int argc, char* argv[])
 				// Set RGB to blk or wht depending on gfx[i]
 				// Always set alpha to 100%
 				pixels[i] = (chip8.gfx[i] * 0x00FFFFFF) | 0xFF000000;
+			
 
 			}
 
@@ -63,25 +66,9 @@ int main(int argc, char* argv[])
 
 		}
 
-
-
-
 	}
-	
-
-	//system("pause");
 
 	SDL_Quit();
 
 	return 0;
 }
-
-/*int main(int argc, char* argv[]) {
-	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-		std::cout << "Unable to initialize SDL: " << SDL_GetError();
-		return 1;
-	}
-
-	SDL_Quit();
-	return 0;
-}*/

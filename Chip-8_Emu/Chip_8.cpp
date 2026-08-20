@@ -75,10 +75,22 @@ void Chip_8::loadRom(const char* filename) {
 	std::cout << "Loading complete!\n\n";
 }
 
-void Chip_8::emulationCycle() {
+unsigned short Chip_8::fetch() {
 
 	// Fetch: Opcode is 16-bit, must combine 2 instructions from memory
 	opcode = memory[PC] << 8 | memory[PC + 1];
+	PC += 2;
+
+	return opcode;
+
+}
+
+void Chip_8::emulationCycle() {
+
+	// Fetch: Opcode is 16-bit, must combine 2 instructions from memory
+	//opcode = memory[PC] << 8 | memory[PC + 1];
+
+	fetch();
 
 	// Decode & execute
 	switch (opcode & 0xF000) {
@@ -91,7 +103,8 @@ void Chip_8::emulationCycle() {
 			// Clear gfx[]/screen
 			case 0x0000:
 				for (unsigned short i = 0; i < (64 * 32); ++i) gfx[i] = 0;
-				PC += 2;
+				std::cout << "Opcode 0x00E0\n";
+				std::cout << "clear screen\n\n";
 				break;
 
 			// 0x00EE: Return from subroutine
@@ -110,6 +123,8 @@ void Chip_8::emulationCycle() {
 		// n, n and n added to program counter
 		case 0x1000:
 			PC = opcode & 0x0FFF;
+			std::cout << "Opcode 0x1000\n";
+			std::cout << std::dec << PC << "\n\n";
 			break;
 
 		// 0x6xnn: load normal register with immediate value
@@ -117,14 +132,24 @@ void Chip_8::emulationCycle() {
 		// n and n are placed into V[x] register
 		case 0x6000:
 			V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
-			PC += 2;
+			std::cout << "Opcode 0x6000\n";
+			std::cout << "V[" << ((opcode & 0x0F00) >> 8) << "] = " << std::dec << (opcode & 0x00FF) << "\n\n";
+			break;
+
+		// 0x7xkk
+		// V[x] += kk
+		case 0x7000:
+			V[((opcode & 0x0F00) >> 8)] += opcode & 0x00FF;
+			std::cout << "Opcode 0x7000\n";
+			std::cout << "V[" << ((opcode & 0x0F00) >> 8) << "] = " << std::hex << V[((opcode & 0x0F00) >> 8)] << "\n\n";
 			break;
 
 		// 0xAnnn: load index register with immediate value
 		// n, n and n added to I
 		case 0xA000:
 			I = opcode & 0x0FFF;
-			PC += 2;
+			std::cout << "Opcode 0xA000\n";
+			std::cout << std::dec << I << "\n\n";
 			break;
 
 		// 0xDxyn: Draw sprites to screen
@@ -140,6 +165,12 @@ void Chip_8::emulationCycle() {
 			// Set collision register
 			V[0xF] = 0;
 
+			std::cout << "Opcode 0xD000\n";
+			std::cout << "Sprint: ";
+			std::cout << std::dec << "V[" << ((opcode & 0x0F00) >> 8 % 64) << "] ";
+			std::cout << std::dec << "V[" << ((opcode & 0x00F0) >> 4 % 32) << "] ";
+			std::cout << std::dec << "N = " << height << "\n\n";
+
 			// Each sprite has a height of n pixels (row) and a width (col) of 8 pixels
 			for (unsigned short row = 0; row < height; ++row) {
 
@@ -153,14 +184,14 @@ void Chip_8::emulationCycle() {
 					//  Clip sprite
 					if (xCoord + col >= 64) break;
 
+					// Since graphics buffer is a 1D array but has 2 coordinates (x, y)
+					// we must "flatten" the array by using (x+(y*width) formula
+					unsigned short location = ((xCoord + col) + ((yCoord + row) * 64));
+
 					// 0x80 = 10000000
 					// Check each bit of the 8-bit sprite pulled from memory
 					// If bit is 1, proceed, otherwise iterate to next bit
 					if ((sprite & (0x80 >> col)) != 0) {
-
-						// Since graphics buffer is a 1D array but has 2 coordinates (x, y)
-						// we must "flatten" the array by using (x+(y*width) formula
-						unsigned short location = (xCoord + col + ((yCoord + row) * 64));
 
 						// Check graphic buffer, if location already set to 1 set collision register to 1
 						if (gfx[location] == 1) {
@@ -176,7 +207,7 @@ void Chip_8::emulationCycle() {
 			}
 
 			draw = true;
-			PC += 2;
+			
 			break;
 		}
 

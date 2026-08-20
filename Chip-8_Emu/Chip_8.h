@@ -17,6 +17,7 @@ public:
 	void initialize();
 	void loadRom(const char*);
 	void emulationCycle(); // Emulate one cycle
+	unsigned short fetch();
 
 	Chip_8();
 	~Chip_8();
