@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 	SDL_Texture* texture = SDL_CreateTexture(rend, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 64, 32);
 
 	chip8.initialize();
-	chip8.loadRom("../ROMs/Test/2-ibm-logo.ch8");
+	chip8.loadRom("../ROMs/Test/1-chip8-logo.ch8");
 
 	while (loop) {
 

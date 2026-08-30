@@ -103,13 +103,14 @@ void Chip_8::emulationCycle() {
 			// Clear gfx[]/screen
 			case 0x0000:
 				for (unsigned short i = 0; i < (64 * 32); ++i) gfx[i] = 0;
-				std::cout << "Opcode 0x00E0\n";
-				std::cout << "clear screen\n\n";
 				break;
 
-			// 0x00EE: Return from subroutine
+			// 0x00EE: Return
 			case 0x000E:
-				// FIX ME
+				
+				PC = stack[SP];
+				--SP;
+
 				break;
 
 			default:
@@ -123,8 +124,50 @@ void Chip_8::emulationCycle() {
 		// n, n and n added to program counter
 		case 0x1000:
 			PC = opcode & 0x0FFF;
-			std::cout << "Opcode 0x1000\n";
-			std::cout << std::dec << PC << "\n\n";
+			break;
+
+		// 0x2nnn: Call
+		// Increment SP, add current PC address to stack
+		// Set PC to nnn
+		case 0x2000:
+
+			++SP;
+			stack[SP] = PC;
+			PC = opcode & 0x0FFF;
+
+			break;
+
+		// 0x3xnn: Skip
+		// x is V[x] index
+		// Increment PC if V[x] == nn
+		case 0x3000:
+			
+			if (V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF)) {
+				PC += 2;
+			}
+
+			break;
+
+		// 0x4xnn: Skip
+		// x is V[x] index
+		// Increment PC if V[x] != nn
+		case 0x4000:
+			
+			if (V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF)) {
+				PC += 2;
+			}
+
+			break;
+
+		// 0x5xy0: Skip
+		// x is V[x] index - y is V[y] index
+		// Increment PC if V[x] == V[y]
+		case 0x5000:
+
+			if (V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4]) {
+				PC += 2;
+			}
+
 			break;
 
 		// 0x6xnn: load normal register with immediate value
@@ -132,24 +175,169 @@ void Chip_8::emulationCycle() {
 		// n and n are placed into V[x] register
 		case 0x6000:
 			V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
-			std::cout << "Opcode 0x6000\n";
-			std::cout << "V[" << ((opcode & 0x0F00) >> 8) << "] = " << std::dec << (opcode & 0x00FF) << "\n\n";
 			break;
 
-		// 0x7xkk
-		// V[x] += kk
+		// 0x7xnn: Add
+		// V[x] += nn
 		case 0x7000:
 			V[((opcode & 0x0F00) >> 8)] += opcode & 0x00FF;
-			std::cout << "Opcode 0x7000\n";
-			std::cout << "V[" << ((opcode & 0x0F00) >> 8) << "] = " << std::hex << V[((opcode & 0x0F00) >> 8)] << "\n\n";
+			break;
+
+		// 0x8xy(0-E)
+		case 0x8000:
+
+			switch (opcode & 0x000F) {
+
+			// 0x8xy0: Set
+			// x == V[x]  y == V[y]
+			// Set V[x] to V[y]
+			case 0x0000:
+
+				V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+
+				break;
+
+			// 0x8xy1: Set OR
+			// x == V[x] - y == V[y]
+			// Set V[x] == V[x] | V[y]
+			case 0x0001:
+
+				V[(opcode & 0x0F00) >> 8] |= V[(opcode & 0x00F0) >> 4];
+
+				break;
+
+			// 0x8xy2: Set AND
+			// x == V[x] - y == V[y]
+			// Set V[x] == V[x] & V[y]
+			case 0x0002:
+
+				V[(opcode & 0x0F00) >> 8] &= V[(opcode & 0x00F0) >> 4];
+
+				break;
+
+			// 0x8xy3: Set XOR
+			// x == V[x] - y == V[y]
+			// Set V[x] == V[x] ^ V[y]
+			case 0x0003:
+
+				V[(opcode & 0x0F00) >> 8] ^= V[(opcode & 0x00F0) >> 4];
+
+				break;
+
+			// 0x8xy4: Add
+			// x == V[x] - y == V[y]
+			// Set V[x] = V[x] + V[y]
+			// If V[x] > 255 set V[F] = 1, else 0
+			case 0x0004: {
+
+				unsigned short sum;
+				sum = V[(opcode & 0x0F00) >> 8] + V[(opcode & 0x00F0) >> 4];
+
+				V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
+
+				if (sum > 0xFF) {
+					V[0xF] = 1;
+				}
+				else
+				{
+					V[0xF] = 0;
+				}
+
+				break;
+			}
+
+			// 0x8xy5: Subtract
+			// x == V[x] - y == V[y]
+			// Set V[x] = V[x] - V[y]
+			// If V[x] > V[y] set V[F] = 1, else 0
+			case 0x0005: {
+
+				unsigned short x = V[(opcode & 0x0F00) >> 8];
+
+				V[(opcode & 0x0F00) >> 8] -= V[(opcode & 0x00F0) >> 4];
+
+				if (x >= V[(opcode & 0x00F0) >> 4]) {
+					V[0xF] = 1;
+				}
+				else
+				{
+					V[0xF] = 0;
+				}
+
+				break;
+			}
+
+			// 0x8xy6: Shift-R
+			// x == V[x]
+			// Lease significant bit of V[x] sets V[0xF]
+			// Set V[x] >>= 1
+			// Modern approach being used, some older games may not work
+			case 0x0006: {
+
+				unsigned char flag = V[(opcode & 0x0F00) >> 8] & 0x1;
+
+				V[(opcode & 0x0F00) >> 8] >>= 1;
+				V[0xF] = flag;
+
+				break;
+			}
+
+			// 0x8xy7: Subtract
+			// x == V[x] - y == V[y]
+			// Set V[x] = V[y] - V[x]
+			// If V[y] > V[x] set V[F] = 1, else 0
+			case 0x0007:
+
+				V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
+
+				if (V[(opcode & 0x0F00) >> 8] > V[(opcode & 0x00F0) >> 4]) {
+					V[0xF] = 0;
+				}
+				else
+				{
+					V[0xF] = 1;
+				}
+
+				break;
+
+			// 0x8xyE: Shift-L
+			// x == V[x]
+			// Most significant bit of V[x] sets V[0xF]
+			// Set V[x] <<= 1
+			// Modern approach being used, some older games may not work
+			case 0x000E: {
+
+				unsigned char flag = V[(opcode & 0x0F00) >> 8] >> 7;
+
+				V[(opcode & 0x0F00) >> 8] <<= 1;
+				V[0xF] = flag;
+
+				break;
+			}
+
+			default:
+				std::cout << "Opcode: " << std::hex << opcode << std::dec << " not found!\n\n";
+				break;
+
+			}
+
+			break;
+
+		// 0x9xy0: Skip
+		// x is V[x] index - y is V[y] index
+		// Increment PC if V[x] != V[y]
+		case 0x9000:
+			
+			if (V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4]) {
+				PC += 2;
+			}
+
 			break;
 
 		// 0xAnnn: load index register with immediate value
 		// n, n and n added to I
 		case 0xA000:
 			I = opcode & 0x0FFF;
-			std::cout << "Opcode 0xA000\n";
-			std::cout << std::dec << I << "\n\n";
 			break;
 
 		// 0xDxyn: Draw sprites to screen
@@ -164,12 +352,6 @@ void Chip_8::emulationCycle() {
 
 			// Set collision register
 			V[0xF] = 0;
-
-			std::cout << "Opcode 0xD000\n";
-			std::cout << "Sprint: ";
-			std::cout << std::dec << "V[" << ((opcode & 0x0F00) >> 8 % 64) << "] ";
-			std::cout << std::dec << "V[" << ((opcode & 0x00F0) >> 4 % 32) << "] ";
-			std::cout << std::dec << "N = " << height << "\n\n";
 
 			// Each sprite has a height of n pixels (row) and a width (col) of 8 pixels
 			for (unsigned short row = 0; row < height; ++row) {
@@ -207,9 +389,63 @@ void Chip_8::emulationCycle() {
 			}
 
 			draw = true;
-			
 			break;
 		}
+		
+		case 0xF000:
+
+			switch (opcode & 0x00FF) {
+
+			// 0xFx1E: Add
+			// I = I + V[x]
+			case 0x001E:
+
+				I += V[(opcode & 0x0F00) >> 8];
+
+				break;
+
+			// 0xFx33: Load
+			// Stores the Binary-coded decimal representation of V[x]
+			// Store each digit in memory at I, I+1 and I+2
+			case 0x0033:
+
+				memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
+				memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
+				memory[I + 2] = V[(opcode & 0x0F00) >> 8] % 10;
+
+				break;
+
+			// 0xFx55: Load
+			// Load V[0] through V[x] to memory starting at I
+			// Incremember I by x + 1
+			case 0x0055:
+
+				for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i) {
+					memory[I + i] = V[i];
+				}
+
+				I += ((opcode & 0x0F00) >> 8) + 1;
+
+				break;
+			
+			// 0xFx65: Load
+			// Load memory starting at I to V[0] through V[x]
+			// Incremember I by x + 1
+			case 0x0065:
+
+				for (int i = 0; i <= ((opcode & 0x0F00) >> 8); ++i) {
+					V[i] = memory[I + i];
+				}
+
+				I += ((opcode & 0x0F00) >> 8) + 1;
+
+				break;
+
+			default:
+				std::cout << "Opcode: " << std::hex << opcode << std::dec << " not found!\n\n";
+				break;
+
+			}
 
 		default: 
 			std::cout << "Opcode not recognized! \n";
