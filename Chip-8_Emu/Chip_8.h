@@ -18,6 +18,7 @@ public:
 	void loadRom(const char*);
 	void emulationCycle(); // Emulate one cycle
 	unsigned short fetch();
+	void handleInput(SDL_Event& event); // keypad input
 
 	Chip_8();
 	~Chip_8();
@@ -38,6 +39,7 @@ private:
 	unsigned short opcode;
 	unsigned char fontSet[80];
 	unsigned char loader[3584];
+
 
 };
 

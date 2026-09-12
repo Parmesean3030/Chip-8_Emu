@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Create SDL window
-	SDL_Window* window = SDL_CreateWindow("Chip-8 Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 320, 0);
+	SDL_Window* window = SDL_CreateWindow("Chip-8 Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 320, 0);
 
 	if (!window) {
 		std::cout << "There was an error creating the window\n\n";
@@ -30,16 +30,18 @@ int main(int argc, char* argv[])
 	SDL_Texture* texture = SDL_CreateTexture(rend, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 64, 32);
 
 	chip8.initialize();
-	chip8.loadRom("../ROMs/Test/1-chip8-logo.ch8");
+	chip8.loadRom("../ROMs/Test/6-keypad.ch8");
 
 	while (loop) {
 
-		//SDL_WaitEvent(&event);
+		SDL_PollEvent(&event);
 
 		// Exit when ESC is pressed
-		//if (event.key.keysym.sym == SDLK_ESCAPE) SDL_Quit();
+		if (event.key.keysym.sym == SDLK_ESCAPE) SDL_Quit();
 
 		chip8.emulationCycle();
+
+		chip8.handleInput(event);
 
 		if (chip8.draw) {
 

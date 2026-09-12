@@ -391,10 +391,46 @@ void Chip_8::emulationCycle() {
 			draw = true;
 			break;
 		}
+
+		case 0xE000:
+
+			switch (opcode & 0x00FF) {
+
+			case 0x009E:
+
+				if (key[V[(opcode & 0x0F00) >> 8]] != 0) { PC += 2; }
+
+				break;
+
+			case 0x00A1:
+
+				if (key[V[(opcode & 0x0F00) >> 8]] == 0) { PC += 2; }
+
+				break;
+
+			default:
+				std::cout << "Opcode: " << std::hex << opcode << std::dec << " not found!\n\n";
+				break;
+
+			}
+
+
+			break;
 		
 		case 0xF000:
 
 			switch (opcode & 0x00FF) {
+
+			case 0x000A:
+
+				for (unsigned char i = 0; i < 16; ++i) {
+
+					if (key[i] != 0) { V[(opcode & 0x0F00) >> 8] = 1; }
+					else { return; }
+
+				}
+
+				break;
 
 			// 0xFx1E: Add
 			// I = I + V[x]
@@ -449,5 +485,43 @@ void Chip_8::emulationCycle() {
 
 		default: 
 			std::cout << "Opcode not recognized! \n";
+	}
+}
+
+void Chip_8::handleInput(SDL_Event& event) {
+	// Ignore any events that are not key presses or releases
+	if (event.type != SDL_KEYDOWN && event.type != SDL_KEYUP) {
+		return;
+	}
+
+	// Determine the state to apply (1 for pressed, 0 for released)
+	unsigned char state = (event.type == SDL_KEYDOWN) ? 1 : 0;
+
+	// Map the physical SDL keyboard key to the Chip-8 hex pad index
+	switch (event.key.keysym.sym) {
+
+		// Row 1
+	case SDLK_1: key[0x1] = state; break;
+	case SDLK_2: key[0x2] = state; break;
+	case SDLK_3: key[0x3] = state; break;
+	case SDLK_4: key[0xC] = state; break;
+
+		// Row 2
+	case SDLK_q: key[0x4] = state; break;
+	case SDLK_w: key[0x5] = state; break;
+	case SDLK_e: key[0x6] = state; break;
+	case SDLK_r: key[0xD] = state; break;
+
+		// Row 3
+	case SDLK_a: key[0x7] = state; break;
+	case SDLK_s: key[0x8] = state; break;
+	case SDLK_d: key[0x9] = state; break;
+	case SDLK_f: key[0xE] = state; break;
+
+		// Row 4
+	case SDLK_z: key[0xA] = state; break;
+	case SDLK_x: key[0x0] = state; break;
+	case SDLK_c: key[0xB] = state; break;
+	case SDLK_v: key[0xF] = state; break;
 	}
 }
