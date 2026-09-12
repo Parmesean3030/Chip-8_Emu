@@ -5,6 +5,8 @@
 #include <fstream>
 #include <algorithm>
 #include <print>
+#include <cstdlib>
+#include <ctime>
 #include "SDL.h"
 
 class Chip_8
@@ -39,6 +41,7 @@ private:
 	unsigned short opcode;
 	unsigned char fontSet[80];
 	unsigned char loader[3584];
+	unsigned char randNum;
 
 
 };

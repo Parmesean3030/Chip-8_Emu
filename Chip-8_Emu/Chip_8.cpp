@@ -340,6 +340,22 @@ void Chip_8::emulationCycle() {
 			I = opcode & 0x0FFF;
 			break;
 
+		case 0xB000:
+			PC = ((opcode & 0x0FFF) + V[0]);
+			break;
+
+		case 0xC000: {
+			unsigned char min = 0;
+			unsigned char max = 255;
+
+			srand(static_cast<unsigned int>(std::time(nullptr)));
+
+			randNum = rand() % ((max - min) + 1) + min;
+			V[(opcode & 0x0F00) >> 8] = randNum & (opcode & 0x00FF);
+
+			break;
+		}
+
 		// 0xDxyn: Draw sprites to screen
 		// 0xDxyn - x is V[x], y is V[y], n is the height of sprite
 		// Modulo to wrap coordinates initially
@@ -420,6 +436,10 @@ void Chip_8::emulationCycle() {
 		case 0xF000:
 
 			switch (opcode & 0x00FF) {
+
+			case 0x0007:
+
+				break;
 
 			case 0x000A:
 
