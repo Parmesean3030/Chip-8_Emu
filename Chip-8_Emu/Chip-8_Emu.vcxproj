@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -72,13 +72,21 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>C:\Development\Dev Libraries\C++\SDL2-2.32.8-VC\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Development\Dev Libraries\C++\SDL2-2.32.8-VC\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\include;C:\Development\Dev Libraries\C++\SDL2-2.32.8-VC\include;$(IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>C:\Development\Dev Libraries\C++\SDL2-2.32.8-VC\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Development\Dev Libraries\C++\SDL2-2.32.8-VC\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\include;C:\Development\Dev Libraries\C++\SDL2-2.32.8-VC\include;$(IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Libraries\C++\SDL2-devel-2.32.10-VC\SDL2-2.32.10\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

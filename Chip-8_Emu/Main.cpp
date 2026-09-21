@@ -5,10 +5,14 @@
 
 int main(int argc, char* argv[])
 {
+	Chip_8 chip8;
 	bool loop = true;
 	int counter = 0;
 	unsigned int pixels[64 * 32];
-	Chip_8 chip8;
+	unsigned short CPF = 700; // cycles per frame
+	const int frameDelay = 1000 / 60;
+	int frameStart;
+	int frameTime;
 
 	// Initialize SDL2
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -34,14 +38,14 @@ int main(int argc, char* argv[])
 
 	while (loop) {
 
-		SDL_PollEvent(&event);
+		frameStart = SDL_GetTicks();
 
-		// Exit when ESC is pressed
-		if (event.key.keysym.sym == SDLK_ESCAPE) SDL_Quit();
+		while (SDL_PollEvent(&event)) {
+			chip8.handleInput(event);
+		}
 
 		chip8.emulationCycle();
-
-		chip8.handleInput(event);
+		chip8.updateTimers();
 
 		if (chip8.draw) {
 
@@ -67,6 +71,14 @@ int main(int argc, char* argv[])
 			SDL_RenderPresent(rend);
 
 		}
+
+		--CPF;
+
+		if (CPF != 0) { continue; }
+		else { CPF = 700; }
+
+		frameTime = SDL_GetTicks() - frameStart;
+		if (frameDelay > frameTime) { SDL_Delay(frameDelay - frameTime); }
 
 	}
 

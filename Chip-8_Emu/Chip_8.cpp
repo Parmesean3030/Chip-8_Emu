@@ -45,7 +45,7 @@ void Chip_8::initialize() {
 
 }
 
-// Read rom binary and add to memory
+// Read rom load to memory
 void Chip_8::loadRom(const char* filename) {
 
 	// Open file as binary and start at the end to get the file size
@@ -66,13 +66,10 @@ void Chip_8::loadRom(const char* filename) {
 		exit(1);
 	}
 
-	std::cout << "Loading ROM into memory...\n\n";
-
 	// Read into memory array starting at memory location 0x200
 	// reinterpret_cast to read unsigned char*
 	file.read(reinterpret_cast<char*>(&memory[PC]), size);
 
-	std::cout << "Loading complete!\n\n";
 }
 
 unsigned short Chip_8::fetch() {
@@ -87,9 +84,6 @@ unsigned short Chip_8::fetch() {
 
 void Chip_8::emulationCycle() {
 
-	// Fetch: Opcode is 16-bit, must combine 2 instructions from memory
-	//opcode = memory[PC] << 8 | memory[PC + 1];
-
 	fetch();
 
 	// Decode & execute
@@ -99,13 +93,12 @@ void Chip_8::emulationCycle() {
 
 			switch (opcode & 0x000F) {
 
-			// 0x00E0 opcode
-			// Clear gfx[]/screen
+			// 0x00E0: Clear gfx[]/screen
 			case 0x0000:
 				for (unsigned short i = 0; i < (64 * 32); ++i) gfx[i] = 0;
 				break;
 
-			// 0x00EE: Return
+			// 0x00EE: Return from subroutine
 			case 0x000E:
 				
 				PC = stack[SP];
@@ -120,13 +113,13 @@ void Chip_8::emulationCycle() {
 
 			break;
 
-		// 0x1nnn: Jump to address
-		// n, n and n added to program counter
+		// 0x1nnn: 
+		// Set PC to nnn
 		case 0x1000:
 			PC = opcode & 0x0FFF;
 			break;
 
-		// 0x2nnn: Call
+		// 0x2nnn
 		// Increment SP, add current PC address to stack
 		// Set PC to nnn
 		case 0x2000:
@@ -137,8 +130,7 @@ void Chip_8::emulationCycle() {
 
 			break;
 
-		// 0x3xnn: Skip
-		// x is V[x] index
+		// 0x3xnn
 		// Increment PC if V[x] == nn
 		case 0x3000:
 			
@@ -148,8 +140,7 @@ void Chip_8::emulationCycle() {
 
 			break;
 
-		// 0x4xnn: Skip
-		// x is V[x] index
+		// 0x4xnn
 		// Increment PC if V[x] != nn
 		case 0x4000:
 			
@@ -159,8 +150,7 @@ void Chip_8::emulationCycle() {
 
 			break;
 
-		// 0x5xy0: Skip
-		// x is V[x] index - y is V[y] index
+		// 0x5xy0
 		// Increment PC if V[x] == V[y]
 		case 0x5000:
 
@@ -170,14 +160,13 @@ void Chip_8::emulationCycle() {
 
 			break;
 
-		// 0x6xnn: load normal register with immediate value
-		// x is the V register
-		// n and n are placed into V[x] register
+		// 0x6xnn
+		// nn is placed into V[x] register
 		case 0x6000:
 			V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
 			break;
 
-		// 0x7xnn: Add
+		// 0x7xnn:
 		// V[x] += nn
 		case 0x7000:
 			V[((opcode & 0x0F00) >> 8)] += opcode & 0x00FF;
@@ -188,8 +177,7 @@ void Chip_8::emulationCycle() {
 
 			switch (opcode & 0x000F) {
 
-			// 0x8xy0: Set
-			// x == V[x]  y == V[y]
+			// 0x8xy0
 			// Set V[x] to V[y]
 			case 0x0000:
 
@@ -197,36 +185,32 @@ void Chip_8::emulationCycle() {
 
 				break;
 
-			// 0x8xy1: Set OR
-			// x == V[x] - y == V[y]
-			// Set V[x] == V[x] | V[y]
+			// 0x8xy1
+			// Set V[x] |= V[y]
 			case 0x0001:
 
 				V[(opcode & 0x0F00) >> 8] |= V[(opcode & 0x00F0) >> 4];
 
 				break;
 
-			// 0x8xy2: Set AND
-			// x == V[x] - y == V[y]
-			// Set V[x] == V[x] & V[y]
+			// 0x8xy2
+			// Set V[x] &= V[y]
 			case 0x0002:
 
 				V[(opcode & 0x0F00) >> 8] &= V[(opcode & 0x00F0) >> 4];
 
 				break;
 
-			// 0x8xy3: Set XOR
-			// x == V[x] - y == V[y]
-			// Set V[x] == V[x] ^ V[y]
+			// 0x8xy3
+			// Set V[x] ^= V[y]
 			case 0x0003:
 
 				V[(opcode & 0x0F00) >> 8] ^= V[(opcode & 0x00F0) >> 4];
 
 				break;
 
-			// 0x8xy4: Add
-			// x == V[x] - y == V[y]
-			// Set V[x] = V[x] + V[y]
+			// 0x8xy4
+			// Set V[x] += V[y]
 			// If V[x] > 255 set V[F] = 1, else 0
 			case 0x0004: {
 
@@ -246,9 +230,8 @@ void Chip_8::emulationCycle() {
 				break;
 			}
 
-			// 0x8xy5: Subtract
-			// x == V[x] - y == V[y]
-			// Set V[x] = V[x] - V[y]
+			// 0x8xy5
+			// x == V[x] -= V[y]
 			// If V[x] > V[y] set V[F] = 1, else 0
 			case 0x0005: {
 
@@ -267,8 +250,7 @@ void Chip_8::emulationCycle() {
 				break;
 			}
 
-			// 0x8xy6: Shift-R
-			// x == V[x]
+			// 0x8xy6
 			// Lease significant bit of V[x] sets V[0xF]
 			// Set V[x] >>= 1
 			// Modern approach being used, some older games may not work
@@ -282,8 +264,7 @@ void Chip_8::emulationCycle() {
 				break;
 			}
 
-			// 0x8xy7: Subtract
-			// x == V[x] - y == V[y]
+			// 0x8xy7
 			// Set V[x] = V[y] - V[x]
 			// If V[y] > V[x] set V[F] = 1, else 0
 			case 0x0007:
@@ -300,8 +281,7 @@ void Chip_8::emulationCycle() {
 
 				break;
 
-			// 0x8xyE: Shift-L
-			// x == V[x]
+			// 0x8xyE
 			// Most significant bit of V[x] sets V[0xF]
 			// Set V[x] <<= 1
 			// Modern approach being used, some older games may not work
@@ -323,8 +303,7 @@ void Chip_8::emulationCycle() {
 
 			break;
 
-		// 0x9xy0: Skip
-		// x is V[x] index - y is V[y] index
+		// 0x9xy0
 		// Increment PC if V[x] != V[y]
 		case 0x9000:
 			
@@ -334,16 +313,21 @@ void Chip_8::emulationCycle() {
 
 			break;
 
-		// 0xAnnn: load index register with immediate value
-		// n, n and n added to I
+		// 0xAnnn
+		// nnn added to I
 		case 0xA000:
 			I = opcode & 0x0FFF;
 			break;
 
+		// 0xBnnn
+		// Set PC to nnn + v[0]
 		case 0xB000:
 			PC = ((opcode & 0x0FFF) + V[0]);
 			break;
 
+		// 0xCxnn
+		// Create random number between 0-255
+		// Set V[x] to random number masked by nn
 		case 0xC000: {
 			unsigned char min = 0;
 			unsigned char max = 255;
@@ -356,8 +340,8 @@ void Chip_8::emulationCycle() {
 			break;
 		}
 
-		// 0xDxyn: Draw sprites to screen
-		// 0xDxyn - x is V[x], y is V[y], n is the height of sprite
+		// 0xDxyn
+		// Draw sprites to screen
 		// Modulo to wrap coordinates initially
 		case 0xD000: {
 
@@ -407,17 +391,21 @@ void Chip_8::emulationCycle() {
 			draw = true;
 			break;
 		}
-
+		
 		case 0xE000:
 
 			switch (opcode & 0x00FF) {
-
+			
+			// 0xEx9E
+			// If key[x] is pressed then skip
 			case 0x009E:
 
 				if (key[V[(opcode & 0x0F00) >> 8]] != 0) { PC += 2; }
 
 				break;
-
+			
+			// 0xExA1
+			// If key[x] is not pressed then skip
 			case 0x00A1:
 
 				if (key[V[(opcode & 0x0F00) >> 8]] == 0) { PC += 2; }
@@ -432,35 +420,80 @@ void Chip_8::emulationCycle() {
 
 
 			break;
-		
+
 		case 0xF000:
 
 			switch (opcode & 0x00FF) {
 
+			// 0xFx07 
+			// set vX to the value of the delay timer
 			case 0x0007:
+
+				V[(opcode & 0x0F00) >> 8] = delayTimer;
 
 				break;
 
-			case 0x000A:
+			// 0xFx0A
+			// wait for a key pressed and released and set vX to it
+			case 0x000A: {
 
-				for (unsigned char i = 0; i < 16; ++i) {
+				if (!waitKey) {
+					for (unsigned char i = 0; i < 16; ++i) {
+						if (key[i] != 0) {
+							pressedKey = i;
+							waitKey = true;
+							break;
+						}
+					}
 
-					if (key[i] != 0) { V[(opcode & 0x0F00) >> 8] = 1; }
-					else { return; }
-
+					PC -= 2;
+				}
+				else {
+					if (key[pressedKey] != 0){
+						PC -= 2;
+					}
+					else {
+						V[(opcode & 0x0F00) >> 8] = pressedKey;
+						waitKey = false;
+					}
 				}
 
 				break;
+			}
 
-			// 0xFx1E: Add
-			// I = I + V[x]
+			// 0xFx15	
+			// Set delay timer to vX
+			case 0x0015:
+
+				delayTimer = V[(opcode & 0x0F00) >> 8];
+
+				break;
+
+			// 0xFx18	
+			// set sound timer to vX
+			case 0x0018:
+
+				soundTimer = V[(opcode & 0x0F00) >> 8];
+
+				break;
+
+			// 0xFx1E
+			// I += V[x]
 			case 0x001E:
 
 				I += V[(opcode & 0x0F00) >> 8];
 
 				break;
 
-			// 0xFx33: Load
+			// 0xFx29 
+			// Set I to the 5 line high hex sprite
+			case 0x0029:
+
+				I = V[(opcode & 0x0F00) >> 8] * 5;
+
+				break;
+
+			// 0xFx33
 			// Stores the Binary-coded decimal representation of V[x]
 			// Store each digit in memory at I, I+1 and I+2
 			case 0x0033:
@@ -471,7 +504,7 @@ void Chip_8::emulationCycle() {
 
 				break;
 
-			// 0xFx55: Load
+			// 0xFx55
 			// Load V[0] through V[x] to memory starting at I
 			// Incremember I by x + 1
 			case 0x0055:
@@ -484,7 +517,7 @@ void Chip_8::emulationCycle() {
 
 				break;
 			
-			// 0xFx65: Load
+			// 0xFx65
 			// Load memory starting at I to V[0] through V[x]
 			// Incremember I by x + 1
 			case 0x0065:
@@ -503,45 +536,54 @@ void Chip_8::emulationCycle() {
 
 			}
 
+			break;
+
 		default: 
-			std::cout << "Opcode not recognized! \n";
+			std::cout << "Opcode: " << std::hex << opcode << std::dec << " not found!\n";
 	}
 }
 
 void Chip_8::handleInput(SDL_Event& event) {
-	// Ignore any events that are not key presses or releases
-	if (event.type != SDL_KEYDOWN && event.type != SDL_KEYUP) {
-		return;
-	}
 
-	// Determine the state to apply (1 for pressed, 0 for released)
+
+	// Exit when ESC is pressed
+	if (event.key.keysym.sym == SDLK_ESCAPE) SDL_Quit();
+
+	// Set state depending if key pressed/released
 	unsigned char state = (event.type == SDL_KEYDOWN) ? 1 : 0;
 
-	// Map the physical SDL keyboard key to the Chip-8 hex pad index
+	// Bind chip-8 keypad to keyboard keys
 	switch (event.key.keysym.sym) {
 
-		// Row 1
+	// Row 1
 	case SDLK_1: key[0x1] = state; break;
 	case SDLK_2: key[0x2] = state; break;
 	case SDLK_3: key[0x3] = state; break;
 	case SDLK_4: key[0xC] = state; break;
 
-		// Row 2
+	// Row 2
 	case SDLK_q: key[0x4] = state; break;
 	case SDLK_w: key[0x5] = state; break;
 	case SDLK_e: key[0x6] = state; break;
 	case SDLK_r: key[0xD] = state; break;
 
-		// Row 3
+	// Row 3
 	case SDLK_a: key[0x7] = state; break;
 	case SDLK_s: key[0x8] = state; break;
 	case SDLK_d: key[0x9] = state; break;
 	case SDLK_f: key[0xE] = state; break;
 
-		// Row 4
+	// Row 4
 	case SDLK_z: key[0xA] = state; break;
 	case SDLK_x: key[0x0] = state; break;
 	case SDLK_c: key[0xB] = state; break;
 	case SDLK_v: key[0xF] = state; break;
 	}
+}
+
+void Chip_8::updateTimers() {
+
+	if (delayTimer != 0) { --delayTimer;  }
+	if (soundTimer != 0) { --soundTimer; }
+	
 }

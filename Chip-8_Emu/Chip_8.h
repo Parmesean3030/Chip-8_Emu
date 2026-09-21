@@ -21,6 +21,7 @@ public:
 	void emulationCycle(); // Emulate one cycle
 	unsigned short fetch();
 	void handleInput(SDL_Event& event); // keypad input
+	void updateTimers();
 
 	Chip_8();
 	~Chip_8();
@@ -42,6 +43,8 @@ private:
 	unsigned char fontSet[80];
 	unsigned char loader[3584];
 	unsigned char randNum;
+	bool waitKey = false;
+	unsigned char pressedKey = 0;
 
 
 };
