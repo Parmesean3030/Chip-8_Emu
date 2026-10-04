@@ -1,12 +1,12 @@
 #pragma once
-#include <stdio.h>
-#include <stdlib.h>
+
+#include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <algorithm>
-#include <print>
-#include <cstdlib>
 #include <ctime>
+#include <limits>
 #include "SDL.h"
 
 class Chip_8
@@ -14,9 +14,12 @@ class Chip_8
 public:
 	unsigned char gfx[64 * 32]; // gfx buffer
 	bool draw;
+	const char* rom;
 	unsigned char key[16]; // Keypad
+
 	
 	void initialize();
+	void startMenu();
 	void loadRom(const char*);
 	void emulationCycle(); // Emulate one cycle
 	unsigned short fetch();

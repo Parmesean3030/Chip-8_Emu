@@ -1,18 +1,17 @@
-#include <iostream>
-#include "Memory.h"
 #include "Chip_8.h"
-#include "SDL.h"
 
 int main(int argc, char* argv[])
 {
 	Chip_8 chip8;
 	bool loop = true;
-	int counter = 0;
 	unsigned int pixels[64 * 32];
-	unsigned short CPF = 700; // cycles per frame
+	unsigned short CPF = 15; // cycles per frame
 	const int frameDelay = 1000 / 60;
 	int frameStart;
 	int frameTime;
+
+	chip8.initialize();
+	chip8.startMenu();
 
 	// Initialize SDL2
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -25,7 +24,7 @@ int main(int argc, char* argv[])
 
 	if (!window) {
 		std::cout << "There was an error creating the window\n\n";
-		system("exit");
+		return 1;
 	}
 
 
@@ -33,18 +32,21 @@ int main(int argc, char* argv[])
 	SDL_Renderer* rend = SDL_CreateRenderer(window, -1, 0);
 	SDL_Texture* texture = SDL_CreateTexture(rend, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 64, 32);
 
-	chip8.initialize();
-	chip8.loadRom("../ROMs/Test/6-keypad.ch8");
-
 	while (loop) {
 
+		// Set starting frame value
 		frameStart = SDL_GetTicks();
 
+		// Check for input and handle
 		while (SDL_PollEvent(&event)) {
 			chip8.handleInput(event);
 		}
 
-		chip8.emulationCycle();
+		// Run CPU cycles for this specific frame
+		for (int i = 0; i < CPF; ++i) {
+			chip8.emulationCycle();
+		}
+
 		chip8.updateTimers();
 
 		if (chip8.draw) {
@@ -54,9 +56,9 @@ int main(int argc, char* argv[])
 			for (unsigned short i = 0; i < sizeof(chip8.gfx); ++i) {
 
 				// Move from gfx[] to pixels array
-				// RBGA is 32 bits, 8 bits for each
+				// ARGB is 32 bits, each being 8 bits or 2 hex
 				// Set RGB to blk or wht depending on gfx[i]
-				// Always set alpha to 100%
+				// Always set alpha to 100%, so we OR to set alpha
 				pixels[i] = (chip8.gfx[i] * 0x00FFFFFF) | 0xFF000000;
 			
 
@@ -72,17 +74,12 @@ int main(int argc, char* argv[])
 
 		}
 
-		--CPF;
-
-		if (CPF != 0) { continue; }
-		else { CPF = 700; }
-
+		// Determine how much time has passed and if needed, delay
+		// Helps maintain 60 FPS
 		frameTime = SDL_GetTicks() - frameStart;
 		if (frameDelay > frameTime) { SDL_Delay(frameDelay - frameTime); }
 
 	}
-
-	SDL_Quit();
 
 	return 0;
 }

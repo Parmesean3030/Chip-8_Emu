@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "Chip_8.h"
 
 Chip_8::Chip_8() {}
@@ -19,6 +18,7 @@ void Chip_8::initialize() {
 	std::fill(std::begin(V), std::end(V), 0);
 	std::fill(std::begin(stack), std::end(stack), 0);
 	std::fill(std::begin(key), std::end(key), 0);
+	std::fill(std::begin(gfx), std::end(gfx), 0);
 
 	// Chip-8 font set
 	unsigned char fontSet[80] = {
@@ -546,8 +546,9 @@ void Chip_8::emulationCycle() {
 void Chip_8::handleInput(SDL_Event& event) {
 
 
-	// Exit when ESC is pressed
+	// Exit when ESC key or window close button is pressed/clicked
 	if (event.key.keysym.sym == SDLK_ESCAPE) SDL_Quit();
+	if (event.window.event == SDL_WINDOWEVENT_CLOSE) SDL_Quit();
 
 	// Set state depending if key pressed/released
 	unsigned char state = (event.type == SDL_KEYDOWN) ? 1 : 0;
@@ -586,4 +587,55 @@ void Chip_8::updateTimers() {
 	if (delayTimer != 0) { --delayTimer;  }
 	if (soundTimer != 0) { --soundTimer; }
 	
+}
+
+void Chip_8::startMenu() {
+	char input;
+	bool looper = true;
+
+	std::cout << std::setw(100) << "********************************************************************************" << std::endl;
+	std::cout << std::setw(100) << "********************************************************************************" << std::endl;
+	std::cout << std::setw(100) << "*                                                                              *" << std::endl;
+	std::cout << std::setw(100) << "*                      PARMESEAN3030'S CHIP-8 EMULATOR                         *" << std::endl;
+	std::cout << std::setw(100) << "*                                                                              *" << std::endl;
+	std::cout << std::setw(100) << "*                      PLEASE SELECT WHICH ROM TO LOAD                         *" << std::endl;
+	std::cout << std::setw(100) << "*                                                                              *" << std::endl;
+	std::cout << std::setw(100) << "********************************************************************************" << std::endl;
+	std::cout << std::setw(100) << "********************************************************************************" << std::endl;
+	std::cout << std::endl << std::endl;
+
+	std::cout << "TEST ROMS" << std::endl;
+	std::cout << "1: Timendus Logo" << std::endl;
+	std::cout << "2: IBM Logo" << std::endl;
+	std::cout << "3: Corax+" << std::endl;
+	std::cout << "4: Flags" << std::endl;
+	std::cout << "5: Keypad" << std::endl;
+	std::cout << std::endl;
+
+	std::cout << "GAME ROMS" << std::endl;
+	std::cout << "6: Space Invaders" << std::endl;
+	std::cout << std::endl;
+
+	while (looper) {
+		std::cout << "Please choose the number associated with the ROM you want to load." << std::endl << std::endl;
+		std::cout << "Load ROM Number: ";
+		std::cin >> input;
+
+		// Discard anything past the first character up to \n
+		// Prevents string input from filling input buffer
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+		switch (input) {
+		case '1': rom = "ROMs/Test/1-chip8-logo.ch8"; looper = false; break;
+		case '2': rom = "ROMs/Test/2-ibm-logo.ch8"; looper = false; break;
+		case '3': rom = "ROMs/Test/3-corax+.ch8"; looper = false; break;
+		case '4': rom = "ROMs/Test/4-flags.ch8"; looper = false; break;
+		case '5': rom = "ROMs/Test/5-keypad.ch8"; looper = false; break;
+		case '6': rom = "ROMs/Games/INVADERS.ch8"; looper = false; break;
+		default: std::cout << "\n\nInvalid option, please try again!\n\n"; break;
+		}
+	}
+
+	loadRom(rom);
+
 }
