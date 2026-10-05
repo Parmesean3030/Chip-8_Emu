@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <ctime>
 #include <limits>
+
+#define SDL_MAIN_HANDLED
 #include "SDL.h"
 
 class Chip_8
