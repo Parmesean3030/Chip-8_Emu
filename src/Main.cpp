@@ -1,3 +1,16 @@
+/*********************************************************************/ 
+/*                                                                   */
+/*                Author: Sean M. (Parmesean3030)                    */
+/*                Date: October 4th 2026                             */
+/*                Project: Chip-8 Emulator                           */
+/*                                                                   */
+/*   Description: Junior year fun project. Build a Chip-8 emulator   */
+/*                that can pass most Timendus tests and play at      */
+/*                least one game                                     */
+/*                                                                   */
+/*********************************************************************/
+
+
 #include "Chip_8.h"
 
 int main(int argc, char* argv[])
